@@ -6,6 +6,8 @@
 
 #define MOVE_UP 119 // W
 #define MOVE_DOWN 115 // S
+#define MOVE_UP2 117 // U
+#define MOVE_DOWN2 106 // J
 
 using namespace std;
 using namespace conmanip;
@@ -21,16 +23,17 @@ class Pong{
     private:
         console_out console;
         int playerX = 6, playerY = 0;
-        int playerW = 1, playerH = 5;
+        int player2X = SCREEN_WIDTH - 6, player2Y = 0;
+        int playersW = 1, playersH = 5;
 
     public:
         int ballx = 0, bally = 0;
+        int points1 = 0, points2 = 0;
         int ballx_velocity = 1, bally_velocity = 1;
-        bool reset = false;
 
         Pong(int sX, int sY, auto console2){
             ballx = sX, bally = sY;
-            playerY = sY - (playerH/2);
+            playerY = player2Y =  sY - (playersH/2);
             console = console2;
         }
 
@@ -41,23 +44,47 @@ class Pong{
                     playerY--;
                 }
             }else if(pressed_key == MOVE_DOWN){
-                if(playerY + playerH < SCREEN_HEIGHT){
+                if(playerY + playersH < SCREEN_HEIGHT){
                     playerY++;
                 }
+            }else if(pressed_key == MOVE_UP2){
+                if(player2Y - 1 > 0){
+                    player2Y--;
+                }
+            }else if(pressed_key == MOVE_DOWN2){
+                if(player2Y + playersH < SCREEN_HEIGHT){
+                    player2Y++;
+                }
+            }
+        }
+
+        void reset_ball(int last_point){
+            ballx = SCREEN_WIDTH/2, bally = SCREEN_HEIGHT/2;
+            bally_velocity = 1;
+            if(last_point == 1){
+                ballx_velocity = 1;
+            }else if(last_point == 2){
+                ballx_velocity = -1;
             }
         }
 
         void ball_collision(){
             if(ballx - 1 == playerX){
-                if(bally >= playerY && bally <= playerY + playerH){
+                if(bally >= playerY && bally <= playerY + playersH){
                     ballx_velocity = 1;
+                }
+            }else if(ballx + 1 == player2X){
+                if(bally >= player2Y && bally <= player2Y + playersH){
+                    ballx_velocity = -1;
                 }
             }
         }
 
-        void render_player(){
-            for(int i = 0; i < playerH; i++){
+        void render_players(){
+            for(int i = 0; i < playersH; i++){
                 console.setpos(playerX, playerY + i);
+                cout << "$";
+                console.setpos(player2X, player2Y + i);
                 cout << "$";
             }
         }
@@ -138,15 +165,17 @@ int main (){
         PongGame.ballx += PongGame.ballx_velocity;
         PongGame.bally += PongGame.bally_velocity;
         
-        if(PongGame.ballx >= SCREEN_WIDTH){
-            PongGame.ballx_velocity = -1;
-        }else if(PongGame.ballx <= 0){
-            PongGame.ballx_velocity = 1;
+        if(PongGame.ballx + 1 == SCREEN_WIDTH){
+            PongGame.reset_ball(1);
+            PongGame.points1++;
+        }else if(PongGame.ballx - 1 == 0){
+            PongGame.reset_ball(2);
+            PongGame.points2++;
         }
 
-        if(PongGame.bally >= SCREEN_HEIGHT){
+        if(PongGame.bally + 1 == SCREEN_HEIGHT){
             PongGame.bally_velocity = -1;
-        }else if(PongGame.bally <= 0){
+        }else if(PongGame.bally - 1 == 0){
             PongGame.bally_velocity = 1;
         }
 
@@ -155,8 +184,11 @@ int main (){
         }
 
         PongGame.ball_collision();
-        PongGame.render_player();
+        PongGame.render_players();
         PongGame.render_ball();
+
+        console.setpos(0, SCREEN_HEIGHT + 2);
+        cout << "PLAYER 1: " << PongGame.points1 << " points" << endl << "PLAYER 2: " << PongGame.points2 << " points";
 
         Sleep(RENDER_FRAMERATE);
     }
